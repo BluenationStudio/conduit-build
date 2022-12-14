@@ -1,0 +1,35 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: suisei-cn/actions-download-file@v1.3.0
+      id: conduit
+      name: Download the file
+      with:
+        url: "https://gitlab.com/famedly/conduit/-/jobs/artifacts/next/raw/build-output/linux_amd64/conduit?job=docker:next"
+        target: .
+    - uses: docker/login-action@v2.1.0
+      with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    - id: string
+      uses: ASzc/change-string-case-action@v5
+      with:
+          string: ${{ github.repository_owner }}
+    - uses: docker/build-push-action@v3.2.0
+      with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.string.outputs.lowercase }}/conduit:latest
+
